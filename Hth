@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرسائل</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; direction: rtl; color: #000; }
+        :root { --navbar-height: 48px; }
+        .navbar { background: #0088cc; color: white; position: fixed; top: 0; width: 100%; z-index: 1000; height: 48px; display: flex; align-items: center; padding: 0 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .navbar .top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .navbar .menu-icon { cursor: pointer; font-size: 20px; padding: 5px; }
+        .navbar .title { font-size: 18px; font-weight: 500; }
+        .navbar .icon-list { display: flex; gap: 20px; }
+        .navbar .icon-list a { cursor: pointer; font-size: 20px; color: white; text-decoration: none; }
+        .navbar .icon-list img { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
+        .navbar .dropdown-menu { position: fixed; top: 0; left: 0; width: 250px; height: 100%; background: #fff; display: none; z-index: 1000; padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+        .navbar .dropdown-menu .close-btn { background: transparent; color: #0088cc; border: none; font-size: 16px; cursor: pointer; margin-bottom: 20px; }
+        .navbar .dropdown-menu a { display: block; padding: 10px 0; color: #000; text-decoration: none; font-size: 16px; }
+        .navbar .dropdown-menu a:hover { color: #0088cc; }
+        .page { display: none; padding-top: calc(var(--navbar-height) + 50px); padding-bottom: 10px; padding-right: 10px; padding-left: 10px; min-height: 100vh; background: #fff; }
+        .tabs { position: fixed; top: var(--navbar-height); width: 100%; background: #fff; display: flex; justify-content: center; gap: 60px; padding: 10px 0; border-bottom: 1px solid #eee; z-index: 950; }
+        .tabs button { background: transparent; border: none; font-size: 16px; color: #777; cursor: pointer; padding: 5px 10px; }
+        .tabs button.active { color: #0088cc; border-bottom: 2px solid #0088cc; }
+        .messenger-item { padding: 15px 10px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 15px; position: relative; background: #fff; border-radius: 8px; margin: 5px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .messenger-item:hover { background: #f8f9fa; }
+        .messenger-item img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+        .messenger-item .info { flex-grow: 1; }
+        .messenger-item .name { font-size: 16px; font-weight: 500; color: #000; }
+        .messenger-item .last-message { margin-top: 2px; color: #222; font-size: 14px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .messenger-item .last-message.unread { font-weight: bold; }
+        .messenger-item .timestamp { font-size: 12px; color: #777; position: absolute; left: 10px; top: 15px; }
+        .add-group-btn { position: fixed; bottom: 20px; left: 20px; background: #0088cc; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100; }
+        .chat-header { position: fixed; top: var(--navbar-height); left: 0; width: 100%; background: #fff; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; z-index: 950; border-bottom: 1px solid #eee; }
+        .chat-header .close-btn { background: transparent; color: #0088cc; border: none; font-size: 16px; cursor: pointer; }
+        .chat-header #chatFriendName { flex-grow: 1; text-align: center; margin: 0; font-size: 16px; font-weight: 500; color: #000; }
+        .chat-header .menu-btn { cursor: pointer; font-size: 20px; color: #0088cc; }
+        .chat-header .call-btn { cursor: pointer; font-size: 20px; color: #0088cc; margin-left: 10px; }
+        .chat-messages { padding-top: 60px; padding-bottom: 60px; overflow-y: auto; height: calc(100vh - var(--navbar-height) - 60px); background: url('https://telegram.org/img/tgme_pattern_v3.svg') repeat; background-size: 100px; }
+        .chat-messages.group-chat { padding-top: 200px; }
+        .chat-input { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; padding: 10px; display: flex; align-items: center; gap: 10px; z-index: 1000; border-top: 1px solid #eee; }
+        .chat-input-container { flex-grow: 1; display: flex; align-items: center; background: #f0f0f0; border-radius: 20px; padding: 5px 10px; }
+        .chat-input-container i.fa-image { cursor: pointer; color: #777; font-size: 20px; margin-right: 10px; }
+        .chat-send-icon { cursor: pointer; color: #0088cc; font-size: 24px; }
+        .chat-input-container textarea { flex-grow: 1; border: none; background: transparent; resize: none; height: 30px; font-size: 14px; padding: 5px; outline: none; }
+        .message { margin: 10px; display: flex; flex-direction: column; }
+        .message-content { padding: 8px 12px; border-radius: 8px; max-width: 70%; word-break: break-word; }
+        .message-content.sent { background: #dcf8c6; color: #000; align-self: flex-end; }
+        .message-content.received { background: #fff; color: #000; align-self: flex-start; border: 1px solid #eee; }
+        .message-content.system { background: #f0f0f0; color: #555; align-self: center; font-size: 12px; }
+        .message-time { font-size: 12px; color: #777; margin-top: 2px; align-self: flex-end; }
+        .context-menu { position: absolute; background: #fff; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 2000; max-width: 200px; }
+        .context-menu button { display: block; width: 100%; background: none; border: none; padding: 5px; text-align: right; cursor: pointer; color: #000; }
+        .context-menu button:hover { background: #f0f0f0; }
+        h2 { font-size: 18px; color: #0088cc; margin: 15px 0 10px; font-weight: 500; }
+        h3 { font-size: 16px; color: #000; margin: 10px 0; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
+        .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #eee; border-radius: 4px; }
+        .modal-content button { background: #0088cc; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .auth-page { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; background: #f8f9fa; }
+        .auth-container { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .auth-container h2 { margin-bottom: 20px; }
+        .auth-container input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #eee; border-radius: 4px; }
+        .auth-container button { width: 100%; padding: 10px; margin: 10px 0; background: #0088cc; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .auth-container a { color: #0088cc; text-decoration: none; cursor: pointer; }
+        .auth-container a:hover { text-decoration: underline; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
+        .loader { border: 8px solid #f3f3f3; border-top: 8px solid #0088cc; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .search-bar { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #eee; border-radius: 4px; font-size: 14px; }
+        .group-cover { position: fixed; top: var(--navbar-height); left: 0; width: 100%; height: 150px; object-fit: cover; z-index: 940; background: #f0f0f0; display: none; }
+        .profile-page { display: none; flex-direction: column; align-items: center; padding-top: calc(var(--navbar-height) + 20px); min-height: 100vh; background: #f8f9fa; }
+        .profile-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 90%; max-width: 500px; text-align: center; }
+        .profile-picture { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; border: 2px solid #0088cc; }
+        .profile-info { margin: 20px 0; }
+        .profile-info p { font-size: 16px; margin: 10px 0; color: #333; }
+        .profile-info p strong { color: #0088cc; }
+        .profile-actions { display: flex; flex-direction: column; gap: 10px; }
+        .profile-actions input { padding: 10px; border: 1px solid #eee; border-radius: 4px; }
+        .profile-actions button { background: #0088cc; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; }
+    .profile-close-btn {
+    position: fixed;
+    top: calc(var(--navbar-height) + 10px); /* أسفل شريط التنقل مباشرة */
+    right: 15px; /* مسافة من اليمين */
+    background: #0088cc;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 950; /* للتأكد من ظهوره فوق العناصر الأخرى */
+}
+
+.profile-close-btn:hover {
+    background: #006b9e; /* لون أغمق عند التمرير */
+}
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay" class="loading-overlay"><div class="loader"></div></div>
+    <div id="loginPage" class="auth-page">
+        <div class="auth-container">
+            <h2>تسجيل الدخول</h2>
+            <input type="email" id="loginEmail" placeholder="البريد الإلكتروني">
+            <input type="password" id="loginPassword" placeholder="كلمة المرور">
+            <button onclick="login()">تسجيل الدخول</button>
+            <p>ليس لديك حساب؟ <a onclick="showRegisterPage()">إنشاء حيث يمكنك التسجيل</a></p>
+        </div>
+    </div>
+    <div id="registerPage" class="auth-page">
+        <div class="auth-container">
+            <h2>إنشاء حساب</h2>
+            <input type="text" id="registerName" placeholder="الاسم">
+            <input type="email" id="registerEmail" placeholder="البريد الإلكتروني">
+            <input type="password" id="registerPassword" placeholder="كلمة المرور">
+            <button onclick="register()">تسجيل</button>
+            <p>لديك حساب؟ <a onclick="showLoginPage()">تسجيل الدخول</a></p>
+        </div>
+    </div>
+      <div id="profilePage" class="profile-page">
+    <button class="profile-close-btn" onclick="closeProfilePage()">إغلاق</button>
+    <div class="profile-container">
+        <img id="profilePicture" class="profile-picture" src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150" alt="صورة الملف الشخصي">
+        <div class="profile-info">
+            <p><strong>الاسم:</strong> <span id="profileName"></span></p>
+            <p><strong>البريد الإلكتروني:</strong> <span id="profileEmail"></span></p>
+            <p><strong>تاريخ التسجيل:</strong> <span id="profileRegistrationDate"></span></p>
+            <p><strong>آخر تسجيل دخول:</strong> <span id="profileLastLogin"></span></p>
+        </div>
+        <div class="profile-actions">
+            <input type="text" id="profilePictureUrl" placeholder="رابط صورة الملف الشخصي">
+            <input type="file" id="profilePictureFile" accept="image/*">
+            <button onclick="updateProfilePicture()">تحديث الصورة</button>
+        </div>
+    </div>
+</div>
+    <div class="navbar" id="navbar" style="display: none;">
+        <div class="top-bar">
+            <i class="fas fa-bars menu-icon" onclick="toggleDropdown()"></i>
+            <span class="title">الرسائل</span>
+            <div class="icon-list">
+                <a href="#" onclick="showProfilePage()">
+                    <img id="profileIcon" src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150" alt="Profile">
+                </a>
+            </div>
+        </div>
+        <div class="dropdown-menu" id="dropdownMenu">
+            <button class="close-btn" onclick="toggleDropdown()">إغلاق</button>
+            <a href="#" onclick="showProfilePage()">الملف الشخصي</a>
+            <a href="#" onclick="logout()">تسجيل الخروج</a>
+            <a href="#" onclick="switchTab('groups')">المجموعات</a>
+        </div>
+    </div>
+    <div class="tabs" style="display: none;">
+        <button class="tab-btn active" onclick="switchTab('messages')">الرسائل</button>
+        <button class="tab-btn" onclick="switchTab('groups')">المجموعات</button>
+    </div>
+    <div id="messages" class="page">
+        <h2>الرسائل</h2>
+        <input type="text" id="messageSearch" class="search-bar" placeholder="ابحث عن مستخدم..." onkeyup="searchUsers()">
+        <div id="userSearchResults"></div>
+        <h3>طلبات المراسلة</h3>
+        <div id="messageRequests"></div>
+        <h3>المحادثات</h3>
+        <div id="messengerList"></div>
+    </div>
+    <div id="groups" class="page">
+        <h2>المجموعات</h2>
+        <input type="text" id="groupSearch" class="search-bar" placeholder="ابحث عن مجموعة..." onkeyup="searchGroups()">
+        <div id="groupSearchResults"></div>
+        <div id="groupList"></div>
+        <i class="fas fa-plus add-group-btn" onclick="showCreateGroupModal()"></i>
+    </div>
+    <div id="chatBox" class="page">
+        <img id="groupCover" class="group-cover" src="" alt="صورة الغلاف">
+        <div class="chat-header">
+            <button class="close-btn" onclick="closeChat()">رجوع</button>
+            <h2 id="chatFriendName">اسم الصديق</h2>
+            <i class="fas fa-phone call-btn" onclick="initiateCall()"></i>
+            <i class="fas fa-ellipsis-v menu-btn" onclick="showChatOptions(event)"></i>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input">
+            <i class="fas fa-paper-plane chat-send-icon" onclick="sendTextMessage()"></i>
+            <div class="chat-input-container">
+                <i class="fas fa-image" onclick="document.getElementById('messageImage').click()"></i>
+                <textarea id="messageInput" placeholder="اكتب رسالة..."></textarea>
+            </div>
+            <input type="file" id="messageImage" accept="image/*" style="display: none;" onchange="sendImageMessage()">
+        </div>
+    </div>
+    <div id="createGroupModal" class="modal">
+        <div class="modal-content">
+            <h2>إنشاء مجموعة جديدة</h2>
+            <input type="text" id="groupName" placeholder="اسم المجموعة">
+            <input type="text" id="groupCoverInput" placeholder="رابط صورة الغلاف (اختياري)">
+            <input type="file" id="groupCoverFileInput" accept="image/*">
+            <button onclick="createGroup()">إنشاء</button>
+            <button onclick="hideCreateGroupModal()">إغلاق</button>
+        </div>
+    </div>
+    <div id="editGroupModal" class="modal">
+        <div class="modal-content">
+            <h2>تعديل المجموعة</h2>
+            <input type="text" id="newGroupName" placeholder="اسم المجموعة الجديد">
+            <input type="text" id="groupCoverUrl" placeholder="رابط صورة الغلاف">
+            <input type="file" id="groupCoverFile" accept="image/*">
+            <button onclick="updateGroup()">حفظ</button>
+            <button onclick="hideEditGroupModal()">إغلاق</button>
+        </div>
+    </div>
+    <div id="membersModal" class="modal">
+        <div class="modal-content">
+            <h2>أعضاء المجموعة</h2>
+            <div id="groupMembersList"></div>
+            <button onclick="hideMembersModal()">إغلاق</button>
+        </div>
+    </div>
+    <div id="addAdminModal" class="modal">
+        <div class="modal-content">
+            <h2>إضافة مشرف</h2>
+            <select id="adminSelect"></select>
+            <button onclick="confirmAddAdmin()">إضافة</button>
+            <button onclick="hideAddAdminModal()">إغلاق</button>
+        </div>
+    </div>
+    <div id="removeAdminModal" class="modal">
+        <div class="modal-content">
+            <h2>إزالة مشرف</h2>
+            <select id="removeAdminSelect"></select>
+            <button onclick="confirmRemoveAdmin()">إزالة</button>
+            <button onclick="hideRemoveAdminModal()">إغلاق</button>
+        </div>
+    </div>
+    <div id="removeMemberModal" class="modal">
+        <div class="modal-content">
+            <h2>إزالة عضو</h2>
+            <select id="removeMemberSelect"></select>
+            <button onclick="confirmRemoveMember()">إزالة</button>
+            <button onclick="hideRemoveMemberModal()">إغلاق</button>
+        </div>
+    </div>
+    <audio id="messageSentSound" src="https://www.soundjay.com/buttons/beep-01a.mp3"></audio>
+    <audio id="messageReadSound" src="https://www.soundjay.com/buttons/beep-07.mp3"></audio>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-storage-compat.js"></script>
+   
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyApU1ph6_FlzjpkmykJR0tXnUbNUr4RF04",
+            authDomain: "amine-tv-live.firebaseapp.com",
+            databaseURL: "https://amine-tv-live-default-rtdb.firebaseio.com",
+            projectId: "amine-tv-live",
+            storageBucket: "amine-tv-live.firebasestorage.app",
+            messagingSenderId: "915423630143",
+            appId: "1:915423630143:web:98c04849211a2e75d7798a"
+        };
+
+        let app, auth, db, storage;
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.database();
+            storage = firebase.storage();
+        } catch (error) {
+            console.error("خطأ في تهيئة Firebase:", error);
+            alert("حدث خطأ أثناء تهيئة التطبيق، تحقق من إعدادات Firebase.");
+            hideLoadingOverlay();
+        }
+        let currentUser = null;
+        let selectedFriend = null;
+        const messageSentSound = document.getElementById('messageSentSound');
+        const messageReadSound = document.getElementById('messageReadSound');
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        function hideLoadingOverlay() { document.getElementById('loadingOverlay').style.display = 'none'; }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.auth-page, .page, .profile-page').forEach(page => page.style.display = 'none');
+            document.getElementById(pageId).style.display = pageId.includes('Page') ? 'flex' : 'block';
+            if (pageId === 'messages' || pageId === 'groups' || pageId === 'chatBox' || pageId === 'profilePage') {
+                document.querySelector('.navbar').style.display = 'flex';
+                document.querySelector('.tabs').style.display = pageId === 'profilePage' ? 'none' : 'flex';
+            } else {
+                document.querySelector('.navbar').style.display = 'none';
+                document.querySelector('.tabs').style.display = 'none';
+            }
+            hideLoadingOverlay();
+        }
+
+        function showLoginPage() { showPage('loginPage'); }
+        function showRegisterPage() { showPage('registerPage'); }
+        function showProfilePage() { showPage('profilePage'); loadProfileData(); }
+
+        function login() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            if (!email || !password) { alert('يرجى إدخال البريد الإلكتروني وكلمة المرور'); return; }
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            auth.signInWithEmailAndPassword(email, password).then(() => {
+                showPage('messages');
+            }).catch(error => {
+                alert('خطأ في تسجيل الدخول: ' + error.message);
+                hideLoadingOverlay();
+            });
+        }
+
+        function register() {
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value.trim();
+            if (!name || !email || !password) { alert('يرجى إدخال جميع الحقول'); return; }
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            auth.createUserWithEmailAndPassword(email, password).then(userCredential => {
+                const user = userCredential.user;
+                return user.updateProfile({ displayName: name });
+            }).then(() => {
+                db.ref(`users/${auth.currentUser.uid}`).set({
+                    displayName: name,
+                    photoURL: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150',
+                    registrationDate: Date.now(),
+                    lastLogin: Date.now()
+                });
+                showPage('messages');
+            }).catch(error => {
+                alert('خطأ في التسجيل: ' + error.message);
+                hideLoadingOverlay();
+            });
+        }
+
+        if (auth) {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    db.ref(`users/${user.uid}`).update({
+                        displayName: user.displayName || 'مستخدم غير محدد',
+                        photoURL: user.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150',
+                        lastLogin: Date.now()
+                    }).then(() => {
+                        document.getElementById('profileIcon').src = user.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150';
+                        showPage('messages');
+                        updateNavbarHeight();
+                        setupMessengerListListener();
+                        setupGroupListListener();
+                    }).catch(error => {
+                        alert("حدث خطأ أثناء تحديث البيانات، حاول تسجيل الدخول مرة أخرى.");
+                        showPage('loginPage');
+                    });
+                } else {
+                    showPage('loginPage');
+                }
+                hideLoadingOverlay();
+            }, error => {
+                alert("حدث خطأ غير متوقع، تحقق من الاتصال بالإنترنت أو إعدادات Firebase.");
+                showPage('loginPage');
+                hideLoadingOverlay();
+            });
+        }
+
+        function loadProfileData() {
+            if (!currentUser) return;
+            db.ref(`users/${currentUser.uid}`).once('value', snapshot => {
+                const userData = snapshot.val();
+                document.getElementById('profilePicture').src = userData.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150';
+                document.getElementById('profileName').textContent = userData.displayName || 'غير محدد';
+                document.getElementById('profileEmail').textContent = currentUser.email;
+                document.getElementById('profileRegistrationDate').textContent = new Date(userData.registrationDate).toLocaleDateString('ar');
+                document.getElementById('profileLastLogin').textContent = new Date(userData.lastLogin).toLocaleDateString('ar');
+            });
+        }
+
+        function updateProfilePicture() {
+            const url = document.getElementById('profilePictureUrl').value.trim();
+            const file = document.getElementById('profilePictureFile').files[0];
+            if (url) {
+                db.ref(`users/${currentUser.uid}`).update({ photoURL: url }).then(() => {
+                    currentUser.updateProfile({ photoURL: url });
+                    document.getElementById('profilePicture').src = url;
+                    document.getElementById('profileIcon').src = url;
+                    document.getElementById('profilePictureUrl').value = '';
+                    alert('تم تحديث الصورة بنجاح!');
+                }).catch(() => alert('حدثت مشكلة أثناء تحديث الصورة'));
+            } else if (file) {
+                const storageRef = storage.ref(`profilePictures/${currentUser.uid}/${Date.now()}_${file.name}`);
+                storageRef.put(file).then(snapshot => {
+                    snapshot.ref.getDownloadURL().then(downloadURL => {
+                        db.ref(`users/${currentUser.uid}`).update({ photoURL: downloadURL }).then(() => {
+                            currentUser.updateProfile({ photoURL: downloadURL });
+                            document.getElementById('profilePicture').src = downloadURL;
+                            document.getElementById('profileIcon').src = downloadURL;
+                            document.getElementById('profilePictureFile').value = '';
+                            alert('تم تحديث الصورة بنجاح!');
+                        });
+                    });
+                }).catch(() => alert('حدثت مشكلة أثناء رفع الصورة'));
+            } else {
+                alert('يرجى إدخال رابط صورة أو اختيار ملف!');
+            }
+        }
+
+        function updateNavbarHeight() {
+            const navbar = document.getElementById('navbar');
+            const height = navbar.offsetHeight;
+            document.documentElement.style.setProperty('--navbar-height', `${height}px`);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.page').forEach(tab => tab.style.display = 'none');
+            document.getElementById(tabId).style.display = 'block';
+            if (tabId === 'messages') loadMessageRequests();
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        }
+
+        function calculateTimeSince(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            const months = Math.floor(days / 30);
+            if (seconds < 60) return `منذ ${seconds} ثانية`;
+            if (minutes < 60) return `منذ ${minutes} دقيقة`;
+            if (hours < 24) return `منذ ${hours} ساعة`;
+            if (days < 30) return `منذ ${days} يوم`;
+            return `منذ ${months} شهر`;
+        }
+
+        function searchUsers() {
+            const searchTerm = document.getElementById('messageSearch').value.trim().toLowerCase();
+            const searchResults = document.getElementById('userSearchResults');
+            searchResults.innerHTML = '';
+            if (!searchTerm) return;
+            db.ref('users').once('value', snapshot => {
+                const users = snapshot.val() || {};
+                Object.entries(users).forEach(([uid, user]) => {
+                    if (uid !== currentUser.uid && user.displayName.toLowerCase().includes(searchTerm)) {
+                        const item = document.createElement('div');
+                        item.className = 'messenger-item';
+                        item.innerHTML = `
+                            <img src="${user.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150'}" alt="${user.displayName}">
+                            <div class="info"><div class="name">${user.displayName}</div></div>
+                            <button onclick="sendMessageRequest('${uid}')">إرسال طلب مراسلة</button>
+                        `;
+                        searchResults.appendChild(item);
+                    }
+                });
+            });
+        }
+
+        function setupMessengerListListener() {
+            const messengerList = document.getElementById('messengerList');
+            if (!messengerList) return;
+            messengerList.innerHTML = '<p>جاري التحميل...</p>';
+            db.ref(`friends/${currentUser.uid}`).on('value', snapshot => {
+                const friends = snapshot.val() || {};
+                if (!Object.keys(friends).length) {
+                    messengerList.innerHTML = '<p>لا توجد محادثات بعد</p>';
+                    return;
+                }
+                const conversations = new Map();
+                const friendIds = Object.keys(friends);
+                friendIds.forEach(friendId => {
+                    const chatId = [currentUser.uid, friendId].sort().join('_');
+                    db.ref(`users/${friendId}`).once('value').then(userSnap => {
+                        const friend = userSnap.val() || {};
+                        const friendName = friend.displayName || 'غير محدد';
+                        const friendPhoto = friend.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150';
+                        db.ref(`messages/${chatId}`).orderByChild('timestamp').limitToLast(1).on('value', messageSnap => {
+                            const lastMessage = messageSnap.val() ? Object.values(messageSnap.val())[0] : null;
+                            conversations.set(friendId, {
+                                friendId,
+                                chatId,
+                                lastMessage,
+                                timestamp: lastMessage ? lastMessage.timestamp : 0,
+                                friendName,
+                                friendPhoto
+                            });
+                            updateMessengerList(conversations);
+                        });
+                    });
+                });
+                if (messengerList.innerHTML === '<p>جاري التحميل...</p>') messengerList.innerHTML = '';
+            });
+        }
+
+        function updateMessengerList(conversations) {
+            const messengerList = document.getElementById('messengerList');
+            if (!messengerList) return;
+            const sortedConversations = Array.from(conversations.values()).sort((a, b) => b.timestamp - a.timestamp);
+            messengerList.innerHTML = '';
+            sortedConversations.forEach(convo => {
+                const { friendId, chatId, lastMessage, friendName, friendPhoto, timestamp } = convo;
+                const item = document.createElement('div');
+                item.className = 'messenger-item';
+                item.dataset.friendId = friendId;
+                const isUnread = lastMessage && !lastMessage.read && lastMessage.senderId !== currentUser.uid;
+                item.innerHTML = `
+                    <img src="${friendPhoto}" alt="${friendName}">
+                    <div class="info">
+                        <div class="name">${friendName}</div>
+                        <p class="last-message ${isUnread ? 'unread' : ''}">
+                            ${lastMessage ? (lastMessage.imageUrl ? '[صورة]' : lastMessage.content.slice(0, 20) + (lastMessage.content.length > 20 ? '...' : '')) : 'لا رسائل بعد'}
+                        </p>
+                    </div>
+                    <span class="timestamp">${timestamp ? calculateTimeSince(timestamp) : ''}</span>
+                `;
+                item.onclick = () => openChat(friendId);
+                item.oncontextmenu = (e) => showChatContextMenu(e, chatId);
+                messengerList.appendChild(item);
+            });
+        }
+
+        function searchGroups() {
+            const searchTerm = document.getElementById('groupSearch').value.trim().toLowerCase();
+            const searchResults = document.getElementById('groupSearchResults');
+            searchResults.innerHTML = '';
+            if (!searchTerm) return;
+            db.ref('groups').once('value', snapshot => {
+                const groups = snapshot.val() || {};
+                Object.entries(groups).forEach(([groupId, group]) => {
+                    if (group.name.toLowerCase().includes(searchTerm) && !group.members[currentUser.uid]) {
+                        const item = document.createElement('div');
+                        item.className = 'messenger-item';
+                        item.innerHTML = `
+                            <img src="${group.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150'}" alt="${group.name}">
+                            <div class="info"><div class="name">${group.name}</div></div>
+                            <button onclick="joinGroup('${groupId}')">الانضمام</button>
+                        `;
+                        searchResults.appendChild(item);
+                    }
+                });
+            });
+        }
+
+        function setupGroupListListener() {
+            const groupList = document.getElementById('groupList');
+            if (!groupList) return;
+            groupList.innerHTML = '<p>جاري التحميل...</p>';
+            db.ref(`groups`).on('value', snapshot => {
+                const groups = snapshot.val() || {};
+                if (!Object.keys(groups).length) {
+                    groupList.innerHTML = '<p>لا توجد مجموعات بعد</p>';
+                    return;
+                }
+                groupList.innerHTML = '';
+                Object.entries(groups).forEach(([groupId, group]) => {
+                    if (group.members && group.members[currentUser.uid]) {
+                        const item = document.createElement('div');
+                        item.className = 'messenger-item';
+                        item.dataset.groupId = groupId;
+                        item.innerHTML = `
+                            <img src="${group.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150'}" alt="${group.name}">
+                            <div class="info">
+                                <div class="name">${group.name || 'مجموعة غير محددة'}</div>
+                                <p class="last-message">${group.lastMessage || 'لا رسائل بعد'}</p>
+                            </div>
+                            <span class="timestamp">${group.timestamp ? calculateTimeSince(group.timestamp) : ''}</span>
+                            <i class="fas fa-ellipsis-v" style="font-size: 16px; color: #777; cursor: pointer;" onclick="showGroupOptions(event, '${groupId}', '${group.creatorId}')"></i>
+                        `;
+                        item.onclick = (e) => { if (e.target.tagName !== 'I') openGroupChat(groupId, group.name, group.photoURL); };
+                        groupList.appendChild(item);
+                    }
+                });
+            });
+        }
+
+        function loadMessageRequests() {
+            const requestsContainer = document.getElementById('messageRequests');
+            if (!requestsContainer) return;
+            requestsContainer.innerHTML = '<p>جاري التحميل...</p>';
+            db.ref(`messageRequests/${currentUser.uid}`).once('value', snapshot => {
+                requestsContainer.innerHTML = '';
+                const requests = snapshot.val() || {};
+                let count = 0;
+                for (const senderId in requests) {
+                    if (requests[senderId].status === 'pending') {
+                        count++;
+                        const requestElement = document.createElement('div');
+                        requestElement.className = 'messenger-item';
+                        requestElement.innerHTML = `
+                            <img src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150" alt="User">
+                            <div class="info"><div class="name">${requests[senderId].senderName || 'غير محدد'}</div></div>
+                            <div>
+                                <button onclick="acceptMessageRequest('${senderId}')" style="background: #0088cc; color: white; padding: 5px 10px; border-radius: 4px;">قبول</button>
+                                <button onclick="rejectMessageRequest('${senderId}')" style="background: #eee; color: #000; padding: 5px 10px; border-radius: 4px;">رفض</button>
+                            </div>
+                        `;
+                        requestsContainer.appendChild(requestElement);
+                    }
+                }
+                if (count === 0) requestsContainer.innerHTML = '<p>لا توجد طلبات مراسلة حاليًا</p>';
+            });
+        }
+
+        function showChatContextMenu(e, chatId) {
+            e.preventDefault();
+            removeExistingContextMenu();
+            const menu = document.createElement('div');
+            menu.className = 'context-menu';
+            menu.style.top = `${e.pageY}px`;
+            menu.style.left = `${e.pageX}px`;
+            menu.innerHTML = `<button onclick="deleteConversationFromMenu('${chatId}')">حذف</button>`;
+            document.body.appendChild(menu);
+            document.addEventListener('click', removeExistingContextMenu, { once: true });
+        }
+
+        function deleteConversationFromMenu(chatId) {
+            if (confirm('هل أنت متأكد من حذف هذه المحادثة؟')) {
+                db.ref(`messages/${chatId}`).remove();
+            }
+            removeExistingContextMenu();
+        }
+
+        function removeExistingContextMenu() {
+            const existingMenu = document.querySelector('.context-menu');
+            if (existingMenu) existingMenu.remove();
+        }
+
+        function openChat(friendId) {
+            db.ref(`users/${friendId}`).once('value', snapshot => {
+                const friend = snapshot.val() || {};
+                if (friend) {
+                    selectedFriend = { id: friendId, name: friend.displayName || 'غير محدد', isGroup: false };
+                    document.getElementById('chatFriendName').textContent = selectedFriend.name;
+                    document.getElementById('groupCover').style.display = 'none';
+                    document.getElementById('chatMessages').classList.remove('group-chat');
+                    showPage('chatBox');
+                    loadMessages();
+                    markMessagesAsRead(friendId);
+                }
+            });
+        }
+
+        function openGroupChat(groupId, groupName, groupPhotoURL) {
+            selectedFriend = { id: groupId, name: groupName, isGroup: true };
+            document.getElementById('chatFriendName').textContent = groupName;
+            const groupCover = document.getElementById('groupCover');
+            groupCover.src = groupPhotoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150';
+            groupCover.style.display = 'block';
+            document.getElementById('chatMessages').classList.add('group-chat');
+            showPage('chatBox');
+            loadGroupMessages(groupId);
+        }
+
+        function loadMessages() {
+            const chatMessages = document.getElementById('chatMessages');
+            if (!chatMessages || !selectedFriend || selectedFriend.isGroup) return;
+            chatMessages.innerHTML = '<p>جاري التحميل...</p>';
+            const chatId = [currentUser.uid, selectedFriend.id].sort().join('_');
+            db.ref(`messages/${chatId}`).orderByChild('timestamp').limitToLast(50).on('value', snapshot => {
+                chatMessages.innerHTML = '';
+                const messages = snapshot.val() || {};
+                Object.entries(messages).sort((a, b) => a[1].timestamp - b[1].timestamp).forEach(([messageId, message]) => {
+                    const messageElement = document.createElement('div');
+                    messageElement.className = 'message';
+                    messageElement.innerHTML = `
+                        <div class="message-content ${message.senderId === currentUser.uid ? 'sent' : 'received'}">
+                            ${message.imageUrl ? `<img src="${message.imageUrl}" style="max-width: 100%; border-radius: 8px;">` : message.content}
+                        </div>
+                        <div class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</div>
+                    `;
+                    chatMessages.appendChild(messageElement);
+                    if (!message.read && message.senderId !== currentUser.uid) messageReadSound.play();
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+
+        function loadGroupMessages(groupId) {
+            const chatMessages = document.getElementById('chatMessages');
+            if (!chatMessages) return;
+            chatMessages.innerHTML = '<p>جاري التحميل...</p>';
+            db.ref(`groupMessages/${groupId}`).orderByChild('timestamp').limitToLast(50).on('value', snapshot => {
+                chatMessages.innerHTML = '';
+                const messages = snapshot.val() || {};
+                Object.entries(messages).sort((a, b) => a[1].timestamp - b[1].timestamp).forEach(([messageId, message]) => {
+                    const messageElement = document.createElement('div');
+                    messageElement.className = 'message';
+                    const className = message.isSystem ? 'system' : (message.senderId === currentUser.uid ? 'sent' : 'received');
+                    messageElement.innerHTML = `
+                        <div class="message-content ${className}">
+                            ${message.isSystem ? message.content : `<strong>${message.senderName}: </strong>${message.imageUrl ? `<img src="${message.imageUrl}" style="max-width: 100%; border-radius: 8px;">` : message.content}`}
+                        </div>
+                        <div class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</div>
+                    `;
+                    chatMessages.appendChild(messageElement);
+                    if (message.senderId !== currentUser.uid && !message.isSystem) messageReadSound.play();
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+
+        function markMessagesAsRead(friendId) {
+            const chatId = [currentUser.uid, friendId].sort().join('_');
+            db.ref(`messages/${chatId}`).once('value', snapshot => {
+                const messages = snapshot.val() || {};
+                const updates = {};
+                Object.entries(messages).forEach(([messageId, message]) => {
+                    if (!message.read && message.senderId !== currentUser.uid) {
+                        updates[`${messageId}/read`] = true;
+                        messageReadSound.play();
+                    }
+                });
+                if (Object.keys(updates).length > 0) db.ref(`messages/${chatId}`).update(updates);
+            });
+        }
+
+        function sendTextMessage() {
+            const messageInput = document.getElementById('messageInput');
+            if (!messageInput || !selectedFriend) return;
+            const content = messageInput.value.trim();
+            if (!content) return;
+            if (selectedFriend.isGroup) {
+                const groupId = selectedFriend.id;
+                const message = {
+                    senderId: currentUser.uid,
+                    senderName: currentUser.displayName || 'غير محدد',
+                    content: content,
+                    timestamp: Date.now()
+                };
+                db.ref(`groupMessages/${groupId}`).push(message).then(() => {
+                    db.ref(`groups/${groupId}`).update({ lastMessage: content, timestamp: Date.now() });
+                    messageInput.value = '';
+                    messageSentSound.play();
+                });
+            } else {
+                const chatId = [currentUser.uid, selectedFriend.id].sort().join('_');
+                const message = {
+                    senderId: currentUser.uid,
+                    senderName: currentUser.displayName || 'غير محدد',
+                    content: content,
+                    timestamp: Date.now(),
+                    read: false
+                };
+                db.ref(`messages/${chatId}`).push(message).then(() => {
+                    messageInput.value = '';
+                    messageSentSound.play();
+                });
+            }
+        }
+
+        function sendImageMessage() {
+            const messageImage = document.getElementById('messageImage');
+            if (!messageImage || !selectedFriend) return;
+            const image = messageImage.files[0];
+            if (!image) return;
+            if (selectedFriend.isGroup) {
+                const groupId = selectedFriend.id;
+                const storageRef = storage.ref(`groupChat/${groupId}/${Date.now()}_${image.name}`);
+                storageRef.put(image).then(snapshot => {
+                    snapshot.ref.getDownloadURL().then(url => {
+                        const message = {
+                            senderId: currentUser.uid,
+                            senderName: currentUser.displayName || 'غير محدد',
+                            imageUrl: url,
+                            timestamp: Date.now()
+                        };
+                        db.ref(`groupMessages/${groupId}`).push(message).then(() => {
+                            db.ref(`groups/${groupId}`).update({ lastMessage: '[صورة]', timestamp: Date.now() });
+                            messageImage.value = '';
+                            messageSentSound.play();
+                        });
+                    });
+                });
+            } else {
+                const chatId = [currentUser.uid, selectedFriend.id].sort().join('_');
+                const storageRef = storage.ref(`chat/${chatId}/${Date.now()}_${image.name}`);
+                storageRef.put(image).then(snapshot => {
+                    snapshot.ref.getDownloadURL().then(url => {
+                        const message = {
+                            senderId: currentUser.uid,
+                            senderName: currentUser.displayName || 'غير محدد',
+                            imageUrl: url,
+                            timestamp: Date.now(),
+                            read: false
+                        };
+                        db.ref(`messages/${chatId}`).push(message).then(() => {
+                            messageImage.value = '';
+                            messageSentSound.play();
+                        });
+                    });
+                });
+            }
+        }
+
+        function sendMessageRequest(userId) {
+            const chatId = [currentUser.uid, userId].sort().join('_');
+            db.ref(`messages/${chatId}`).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    alert('لديك محادثة مع هذا المستخدم بالفعل!');
+                    return;
+                }
+                db.ref(`messageRequests/${userId}/${currentUser.uid}`).once('value', snapshot => {
+                    if (snapshot.exists()) {
+                        alert('تم إرسال طلب مراسلة مسبقًا!');
+                        return;
+                    }
+                    db.ref(`messageRequests/${currentUser.uid}/${userId}`).once('value', snapshot => {
+                        if (snapshot.exists()) {
+                            alert('لديك طلب مراسلة من هذا المستخدم بالفعل!');
+                            return;
+                        }
+                        const request = {
+                            senderId: currentUser.uid,
+                            senderName: currentUser.displayName || 'غير محدد',
+                            content: 'يريد هذا المستخدم مراسلتك',
+                            timestamp: Date.now(),
+                            status: 'pending'
+                        };
+                        db.ref(`messageRequests/${userId}/${currentUser.uid}`).set(request).then(() => {
+                            alert('تم إرسال طلب المراسلة!');
+                        });
+                    });
+                });
+            });
+        }
+
+        function acceptMessageRequest(senderId) {
+            db.ref(`messageRequests/${currentUser.uid}/${senderId}`).update({ status: 'accepted' });
+            db.ref(`friends/${currentUser.uid}/${senderId}`).set(true);
+            db.ref(`friends/${senderId}/${currentUser.uid}`).set(true);
+            loadMessageRequests();
+        }
+         
+    // ... (الكود السابق الذي كتبته حتى نهاية rejectMessageRequest)
+        function rejectMessageRequest(senderId) {
+            db.ref(`messageRequests/${currentUser.uid}/${senderId}`).remove();
+            loadMessageRequests();
+        }
+
+        function closeChat() {
+            selectedFriend = null;
+            showPage('messages');
+            document.getElementById('chatMessages').innerHTML = '';
+            document.getElementById('groupCover').style.display = 'none';
+            document.getElementById('chatMessages').classList.remove('group-chat');
+        }
+
+        function initiateCall() {
+            alert('ميزة الاتصال غير متاحة حاليًا.');
+        }
+
+        function showChatOptions(event) {
+            event.stopPropagation();
+            removeExistingContextMenu();
+            const menu = document.createElement('div');
+            menu.className = 'context-menu';
+            menu.style.top = `${event.pageY}px`;
+            menu.style.left = `${event.pageX}px`;
+            if (selectedFriend.isGroup) {
+                menu.innerHTML = `
+                    <button onclick="showEditGroupModal('${selectedFriend.id}')">تعديل المجموعة</button>
+                    <button onclick="showMembersModal('${selectedFriend.id}')">عرض الأعضاء</button>
+                    <button onclick="leaveGroup('${selectedFriend.id}')">مغادرة المجموعة</button>
+                `;
+            } else {
+                menu.innerHTML = `<button onclick="deleteConversation('${selectedFriend.id}')">حذف المحادثة</button>`;
+            }
+            document.body.appendChild(menu);
+            document.addEventListener('click', removeExistingContextMenu, { once: true });
+        }
+
+        function deleteConversation(friendId) {
+            if (confirm('هل أنت متأكد من حذف هذه المحادثة؟')) {
+                const chatId = [currentUser.uid, friendId].sort().join('_');
+                db.ref(`messages/${chatId}`).remove();
+                closeChat();
+            }
+        }
+
+        function showCreateGroupModal() {
+            document.getElementById('createGroupModal').style.display = 'flex';
+        }
+
+        function hideCreateGroupModal() {
+            document.getElementById('createGroupModal').style.display = 'none';
+            document.getElementById('groupName').value = '';
+            document.getElementById('groupCoverInput').value = '';
+            document.getElementById('groupCoverFileInput').value = '';
+        }
+
+        function createGroup() {
+            const groupName = document.getElementById('groupName').value.trim();
+            const groupCoverUrl = document.getElementById('groupCoverInput').value.trim();
+            const groupCoverFile = document.getElementById('groupCoverFileInput').files[0];
+            if (!groupName) {
+                alert('يرجى إدخال اسم المجموعة!');
+                return;
+            }
+            const groupData = {
+                name: groupName,
+                creatorId: currentUser.uid,
+                members: { [currentUser.uid]: true },
+                admins: { [currentUser.uid]: true },
+                timestamp: Date.now()
+            };
+            if (groupCoverUrl) {
+                groupData.photoURL = groupCoverUrl;
+                saveGroup(groupData);
+            } else if (groupCoverFile) {
+                const storageRef = storage.ref(`groupCovers/${Date.now()}_${groupCoverFile.name}`);
+                storageRef.put(groupCoverFile).then(snapshot => {
+                    snapshot.ref.getDownloadURL().then(url => {
+                        groupData.photoURL = url;
+                        saveGroup(groupData);
+                    });
+                });
+            } else {
+                saveGroup(groupData);
+            }
+        }
+
+        function saveGroup(groupData) {
+            const groupRef = db.ref('groups').push();
+            groupRef.set(groupData).then(() => {
+                hideCreateGroupModal();
+                alert('تم إنشاء المجموعة بنجاح!');
+            }).catch(() => alert('حدث خطأ أثناء إنشاء المجموعة'));
+        }
+
+        function showEditGroupModal(groupId) {
+            db.ref(`groups/${groupId}`).once('value', snapshot => {
+                const group = snapshot.val();
+                if (group.admins[currentUser.uid]) {
+                    document.getElementById('newGroupName').value = group.name;
+                    document.getElementById('groupCoverUrl').value = group.photoURL || '';
+                    document.getElementById('editGroupModal').dataset.groupId = groupId;
+                    document.getElementById('editGroupModal').style.display = 'flex';
+                } else {
+                    alert('فقط المشرفون يمكنهم تعديل المجموعة!');
+                }
+            });
+        }
+
+        function hideEditGroupModal() {
+            document.getElementById('editGroupModal').style.display = 'none';
+            document.getElementById('newGroupName').value = '';
+            document.getElementById('groupCoverUrl').value = '';
+            document.getElementById('groupCoverFile').value = '';
+        }
+
+        function updateGroup() {
+            const groupId = document.getElementById('editGroupModal').dataset.groupId;
+            const newName = document.getElementById('newGroupName').value.trim();
+            const newCoverUrl = document.getElementById('groupCoverUrl').value.trim();
+            const newCoverFile = document.getElementById('groupCoverFile').files[0];
+            if (!newName) {
+                alert('يرجى إدخال اسم المجموعة!');
+                return;
+            }
+            const updates = { name: newName };
+            if (newCoverUrl) {
+                updates.photoURL = newCoverUrl;
+                saveGroupUpdates(groupId, updates);
+            } else if (newCoverFile) {
+                const storageRef = storage.ref(`groupCovers/${groupId}/${Date.now()}_${newCoverFile.name}`);
+                storageRef.put(newCoverFile).then(snapshot => {
+                    snapshot.ref.getDownloadURL().then(url => {
+                        updates.photoURL = url;
+                        saveGroupUpdates(groupId, updates);
+                    });
+                });
+            } else {
+                saveGroupUpdates(groupId, updates);
+            }
+        }
+
+        function saveGroupUpdates(groupId, updates) {
+            db.ref(`groups/${groupId}`).update(updates).then(() => {
+                hideEditGroupModal();
+                if (selectedFriend && selectedFriend.id === groupId) {
+                    document.getElementById('chatFriendName').textContent = updates.name;
+                    if (updates.photoURL) document.getElementById('groupCover').src = updates.photoURL;
+                }
+                alert('تم تحديث المجموعة بنجاح!');
+            }).catch(() => alert('حدث خطأ أثناء تحديث المجموعة'));
+        }
+
+        function showMembersModal(groupId) {
+            db.ref(`groups/${groupId}`).once('value', snapshot => {
+                const group = snapshot.val();
+                const membersList = document.getElementById('groupMembersList');
+                membersList.innerHTML = '<p>جاري التحميل...</p>';
+                document.getElementById('membersModal').dataset.groupId = groupId;
+                document.getElementById('membersModal').style.display = 'flex';
+                const memberIds = Object.keys(group.members || {});
+                const memberPromises = memberIds.map(id => db.ref(`users/${id}`).once('value'));
+                Promise.all(memberPromises).then(snapshots => {
+                    membersList.innerHTML = '';
+                    snapshots.forEach(snap => {
+                        const user = snap.val();
+                        const isAdmin = group.admins[snap.key];
+                        const memberItem = document.createElement('div');
+                        memberItem.className = 'messenger-item';
+                        memberItem.innerHTML = `
+                            <img src="${user.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=150'}" alt="${user.displayName}">
+                            <div class="info">
+                                <div class="name">${user.displayName} ${isAdmin ? '(مشرف)' : ''}</div>
+                            </div>
+                        `;
+                        membersList.appendChild(memberItem);
+                    });
+                    if (group.admins[currentUser.uid]) {
+                        const adminActions = document.createElement('div');
+                        adminActions.innerHTML = `
+                            <button onclick="showAddAdminModal('${groupId}')">إضافة مشرف</button>
+                            <button onclick="showRemoveAdminModal('${groupId}')">إزالة مشرف</button>
+                            <button onclick="showRemoveMemberModal('${groupId}')">إزالة عضو</button>
+                        `;
+                        membersList.appendChild(adminActions);
+                    }
+                });
+            });
+        }
+
+        function hideMembersModal() {
+            document.getElementById('membersModal').style.display = 'none';
+            document.getElementById('groupMembersList').innerHTML = '';
+        }
+
+        function showAddAdminModal(groupId) {
+            db.ref(`groups/${groupId}`).once('value', snapshot => {
+                const group = snapshot.val();
+                const select = document.getElementById('adminSelect');
+                select.innerHTML = '';
+                const nonAdmins = Object.keys(group.members).filter(id => !group.admins[id]);
+                if (nonAdmins.length === 0) {
+                    alert('جميع الأعضاء مشرفون بالفعل!');
+                    return;
+                }
+                nonAdmins.forEach(id => {
+                    db.ref(`users/${id}`).once('value', snap => {
+                        const user = snap.val();
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = user.displayName;
+                        select.appendChild(option);
+                    });
+                });
+                document.getElementById('addAdminModal').dataset.groupId = groupId;
+                document.getElementById('addAdminModal').style.display = 'flex';
+            });
+        }
+
+        function hideAddAdminModal() {
+            document.getElementById('addAdminModal').style.display = 'none';
+        }
+
+        function confirmAddAdmin() {
+            const groupId = document.getElementById('addAdminModal').dataset.groupId;
+            const userId = document.getElementById('adminSelect').value;
+            db.ref(`groups/${groupId}/admins/${userId}`).set(true).then(() => {
+                hideAddAdminModal();
+                showMembersModal(groupId);
+                alert('تمت إضافة المشرف بنجاح!');
+            });
+        }
+
+        function showRemoveAdminModal(groupId) {
+            db.ref(`groups/${groupId}`).once('value', snapshot => {
+                const group = snapshot.val();
+                const select = document.getElementById('removeAdminSelect');
+                select.innerHTML = '';
+                const admins = Object.keys(group.admins).filter(id => id !== group.creatorId);
+                if (admins.length === 0) {
+                    alert('لا يوجد مشرفون آخرون للإزالة!');
+                    return;
+                }
+                admins.forEach(id => {
+                    db.ref(`users/${id}`).once('value', snap => {
+                        const user = snap.val();
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = user.displayName;
+                        select.appendChild(option);
+                    });
+                });
+                document.getElementById('removeAdminModal').dataset.groupId = groupId;
+                document.getElementById('removeAdminModal').style.display = 'flex';
+            });
+        }
+
+        function hideRemoveAdminModal() {
+            document.getElementById('removeAdminModal').style.display = 'none';
+        }
+
+        function confirmRemoveAdmin() {
+            const groupId = document.getElementById('removeAdminModal').dataset.groupId;
+            const userId = document.getElementById('removeAdminSelect').value;
+            db.ref(`groups/${groupId}/admins/${userId}`).remove().then(() => {
+                hideRemoveAdminModal();
+                showMembersModal(groupId);
+                alert('تمت إزالة المشرف بنجاح!');
+            });
+        }
+
+        function showRemoveMemberModal(groupId) {
+            db.ref(`groups/${groupId}`).once('value', snapshot => {
+                const group = snapshot.val();
+                const select = document.getElementById('removeMemberSelect');
+                select.innerHTML = '';
+                const members = Object.keys(group.members).filter(id => id !== group.creatorId);
+                if (members.length === 0) {
+                    alert('لا يوجد أعضاء آخرون للإزالة!');
+                    return;
+                }
+                members.forEach(id => {
+                    db.ref(`users/${id}`).once('value', snap => {
+                        const user = snap.val();
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = user.displayName;
+                        select.appendChild(option);
+                    });
+                });
+                document.getElementById('removeMemberModal').dataset.groupId = groupId;
+                document.getElementById('removeMemberModal').style.display = 'flex';
+            });
+        }
+
+        function hideRemoveMemberModal() {
+            document.getElementById('removeMemberModal').style.display = 'none';
+        }
+
+        function confirmRemoveMember() {
+            const groupId = document.getElementById('removeMemberModal').dataset.groupId;
+            const userId = document.getElementById('removeMemberSelect').value;
+            db.ref(`groups/${groupId}/members/${userId}`).remove().then(() => {
+                db.ref(`groups/${groupId}/admins/${userId}`).remove();
+                const systemMessage = {
+                    content: `${currentUser.displayName} قام بإزالة عضو`,
+                    timestamp: Date.now(),
+                    isSystem: true
+                };
+                db.ref(`groupMessages/${groupId}`).push(systemMessage);
+                hideRemoveMemberModal();
+                showMembersModal(groupId);
+                alert('تمت إزالة العضو بنجاح!');
+            });
+        }
+
+        function joinGroup(groupId) {
+            db.ref(`groups/${groupId}/members/${currentUser.uid}`).set(true).then(() => {
+                const systemMessage = {
+                    content: `${currentUser.displayName} انضم إلى المجموعة`,
+                    timestamp: Date.now(),
+                    isSystem: true
+                };
+                db.ref(`groupMessages/${groupId}`).push(systemMessage);
+                document.getElementById('groupSearch').value = '';
+                searchGroups();
+                alert('تم الانضمام إلى المجموعة بنجاح!');
+            });
+        }
+
+        function leaveGroup(groupId) {
+            if (confirm('هل أنت متأكد من مغادرة المجموعة؟')) {
+                db.ref(`groups/${groupId}`).once('value', snapshot => {
+                    const group = snapshot.val();
+                    if (group.creatorId === currentUser.uid) {
+                        alert('لا يمكن للمالك مغادرة المجموعة، يجب حذفها!');
+                        return;
+                    }
+                    db.ref(`groups/${groupId}/members/${currentUser.uid}`).remove().then(() => {
+                        db.ref(`groups/${groupId}/admins/${currentUser.uid}`).remove();
+                        const systemMessage = {
+                            content: `${currentUser.displayName} غادر المجموعة`,
+                            timestamp: Date.now(),
+                            isSystem: true
+                        };
+                        db.ref(`groupMessages/${groupId}`).push(systemMessage);
+                        closeChat();
+                        alert('تم مغادرة المجموعة بنجاح!');
+                    });
+                });
+            }
+        }
+
+        function showGroupOptions(event, groupId, creatorId) {
+            event.stopPropagation();
+            removeExistingContextMenu();
+            const menu = document.createElement('div');
+            menu.className = 'context-menu';
+            menu.style.top = `${event.pageY}px`;
+            menu.style.left = `${event.pageX}px`;
+            menu.innerHTML = `
+                <button onclick="showEditGroupModal('${groupId}')">تعديل المجموعة</button>
+                <button onclick="showMembersModal('${groupId}')">عرض الأعضاء</button>
+                <button onclick="leaveGroup('${groupId}')">مغادرة المجموعة</button>
+                ${creatorId === currentUser.uid ? `<button onclick="deleteGroup('${groupId}')">حذف المجموعة</button>` : ''}
+            `;
+            document.body.appendChild(menu);
+            document.addEventListener('click', removeExistingContextMenu, { once: true });
+        }
+
+        function deleteGroup(groupId) {
+            if (confirm('هل أنت متأكد من حذف هذه المجموعة؟ سيتم حذف جميع الرسائل والأعضاء.')) {
+                db.ref(`groups/${groupId}`).remove();
+                db.ref(`groupMessages/${groupId}`).remove();
+                closeChat();
+                alert('تم حذف المجموعة بنجاح!');
+            }
+        }
+
+        function toggleDropdown() {
+            const dropdown = document.getElementById('dropdownMenu');
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                currentUser = null;
+                selectedFriend = null;
+                showPage('loginPage');
+            }).catch(error => {
+                alert('خطأ في تسجيل الخروج: ' + error.message);
+            });
+        }
+        
+function closeProfilePage() {
+    showPage('messages'); // العودة إلى صفحة الرسائل
+}
+        window.addEventListener('resize', updateNavbarHeight);
+        
+    </script>
+</body>
+</html>
